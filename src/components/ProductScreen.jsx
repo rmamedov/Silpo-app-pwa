@@ -2,7 +2,7 @@
 // The 18+ block renders only for adult goods (alcohol / tobacco): products with `adult: true`.
 import { useState } from 'react';
 import Icon from './Icon.jsx';
-import { TsinoMark, AddPlusMark } from './logos.jsx';
+import { TsinoMark, AddPlusMark, HeartMark } from './logos.jsx';
 import { gallery } from '../data/gallery.js';
 
 const fmt = (n) => n.toFixed(2);
@@ -134,8 +134,8 @@ const Gallery = ({ images, showTsino }) => {
       <div className="no-sb" onScroll={onScroll}
         style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
         {images.map((src, i) => (
-          <div key={i} style={{ flex: 'none', width: '100%', aspectRatio: '1 / 1', scrollSnapAlign: 'start',
-            display: 'grid', placeItems: 'center', background: '#fff' }}>
+          <div key={i} style={{ flex: 'none', width: '100%', aspectRatio: '1 / 1', scrollSnapAlign: 'center',
+            scrollSnapStop: 'always', display: 'grid', placeItems: 'center', background: '#fff' }}>
             <img src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'}
               style={{ width: '86%', height: '86%', objectFit: 'contain' }}/>
           </div>
@@ -144,11 +144,12 @@ const Gallery = ({ images, showTsino }) => {
       {showTsino && <div style={{ position: 'absolute', top: 16, left: 16 }}><TsinoMark size={48}/></div>}
       {images.length > 1 && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 12, display: 'flex',
-          justifyContent: 'center', alignItems: 'center', gap: 6, pointerEvents: 'none' }}>
+          justifyContent: 'center', alignItems: 'center', gap: 4, pointerEvents: 'none' }}>
           {images.map((_, i) => (
-            <span key={i} style={{ width: 8, height: 8, borderRadius: 8,
+            <span key={i} style={{ width: i === active ? 16 : 6, height: 6, borderRadius: 8,
               background: i === active ? '#2358D1' : 'rgba(32,33,36,.2)',
-              transition: 'background 200ms cubic-bezier(.2,.7,.2,1)' }}/>
+              transition: 'width 350ms cubic-bezier(.4,0,.2,1), background 350ms cubic-bezier(.4,0,.2,1)',
+              willChange: 'width' }}/>
           ))}
         </div>
       )}
@@ -161,24 +162,28 @@ export default function ProductScreen({ p, onBack, qty, setQty, fav, toggleFav, 
   const disc = p.old ? Math.round((1 - p.price / p.old) * 100) : 0;
   const images = gallery[p.id]?.length ? gallery[p.id] : [p.img];
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 50, maxWidth: 560, margin: '0 auto',
+    <div style={{ position: 'absolute', inset: 0, background: '#fff',
       display: 'flex', flexDirection: 'column' }}>
       {/* 1. Top app bar */}
       <div style={{ flex: 'none', paddingTop: 'var(--safe-top)', borderBottom: '1px solid rgba(32,33,36,.06)' }}>
         <div style={{ height: 56, display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px' }}>
           <button onClick={onBack} aria-label="Назад" style={{ width: 24, height: 24, border: 0, padding: 0,
             background: 'transparent', cursor: 'pointer', flex: 'none', display: 'grid', placeItems: 'center' }}>
-            <Icon name="arrowL" size={24} color="rgba(32,33,36,.72)"/>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.0069 20.0025C14.7468 20.0025 14.4967 19.9025 14.2966 19.7125L7.29266 12.7125C6.90245 12.3225 6.90245 11.6925 7.29266 11.3025L14.2966 4.2925C14.6868 3.9025 15.3171 3.9025 15.7073 4.2925C16.0976 4.6825 16.0976 5.3125 15.7073 5.7025L9.41384 11.9925L15.7073 18.2825C16.0976 18.6725 16.0976 19.3025 15.7073 19.6925C15.5072 19.8925 15.2571 19.9825 14.9969 19.9825L15.0069 20.0025Z" fill="#13131E" fillOpacity="0.72"/>
+            </svg>
           </button>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 22, fontWeight: 600, lineHeight: 1.2, color: 'rgba(32,33,36,.87)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.cat || 'Товар'}</span>
+          <div style={{ flex: 1, minWidth: 0 }}/>
           <button aria-label="Поділитися" style={{ width: 24, height: 24, border: 0, padding: 0, background: 'transparent',
             cursor: 'pointer', flex: 'none', display: 'grid', placeItems: 'center' }}>
-            <Icon name="share" size={24} color="#2358D1" sw={1.8}/>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fillRule="evenodd" clipRule="evenodd" d="M16 9.75C15.4477 9.75 15 9.35825 15 8.875C15 8.39175 15.4477 8 16 8H18C19.1046 8 20 8.7835 20 9.75V20.25C20 21.2165 19.1046 22 18 22H6C4.89543 22 4 21.2165 4 20.25V9.75C4 8.7835 4.89543 8 6 8H8C8.55228 8 9 8.39175 9 8.875C9 9.35825 8.55228 9.75 8 9.75H6V11.5V18.5V20.25H8H16H18V18.5V11.5V9.75H16Z" fill="#2358D1"/>
+              <path fillRule="evenodd" clipRule="evenodd" d="M13 4.41421L14.2929 5.70711C14.6834 6.09763 15.3166 6.09763 15.7071 5.70711C16.0976 5.31658 16.0976 4.68342 15.7071 4.29289L12.7071 1.29289C12.3166 0.902369 11.6834 0.902369 11.2929 1.29289L8.29289 4.29289C7.90237 4.68342 7.90237 5.31658 8.29289 5.70711C8.68342 6.09763 9.31658 6.09763 9.70711 5.70711L11 4.41421V15.0667C11 15.5821 11.4477 16 12 16C12.5523 16 13 15.5821 13 15.0667V4.41421Z" fill="#2358D1"/>
+            </svg>
           </button>
           <button onClick={toggleFav} aria-label="В обране" style={{ width: 24, height: 24, border: 0, padding: 0,
             background: 'transparent', cursor: 'pointer', flex: 'none', display: 'grid', placeItems: 'center' }}>
-            <Icon name={fav ? 'heart' : 'heartO'} size={24} color={fav ? '#DA291C' : 'rgba(32,33,36,.38)'}/>
+            <HeartMark size={24} filled={fav}/>
           </button>
         </div>
       </div>

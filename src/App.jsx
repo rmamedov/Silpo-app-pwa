@@ -146,7 +146,8 @@ const BannerCarousel = () => {
             <span key={i} style={{ width: i === active ? 16 : 6, height: 6, borderRadius: 8,
               background: i === active ? '#FFFFFF' : 'rgba(255,255,255,.6)',
               boxShadow: '0 1px 2px rgba(0,0,0,.18)',
-              transition: 'width 200ms cubic-bezier(.2,.7,.2,1)' }}/>
+              transition: 'width 350ms cubic-bezier(.4,0,.2,1), background 350ms cubic-bezier(.4,0,.2,1)',
+              willChange: 'width' }}/>
           ))}
         </div>
       </div>
@@ -476,20 +477,76 @@ const usePersisted = (key, initial) => {
   return [val, setVal];
 };
 
+/* ---------- Product overlay: slides in from the right on open, out to the
+   right on back. Keeps the last product mounted during the exit animation. ---------- */
+function ProductOverlay({ product, cart, favs, setQty, toggleFav, onOpen, onBack }) {
+  const [shown, setShown] = useState(product); // persists through the exit transition
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setShown(product);
+      // two RAFs so the off-screen start state paints before transitioning in
+      const r = requestAnimationFrame(() => requestAnimationFrame(() => setOpen(true)));
+      return () => cancelAnimationFrame(r);
+    }
+    setOpen(false); // slide out
+  }, [product]);
+
+  if (!shown) return null;
+  const p = shown;
+  const similar = (sectionOf(p.id)?.products || ALL_PRODUCTS).filter((x) => x.id !== p.id);
+  return (
+    <div
+      onTransitionEnd={(e) => { if (e.propertyName === 'transform' && !open && !product) setShown(null); }}
+      style={{ position: 'fixed', inset: 0, zIndex: 50, maxWidth: 560, margin: '0 auto',
+        transform: open ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 320ms cubic-bezier(.2,.7,.2,1)',
+        boxShadow: open ? '-8px 0 28px rgba(0,0,0,.14)' : 'none', willChange: 'transform' }}>
+      <ProductScreen
+        key={p.id}
+        p={p}
+        onBack={onBack}
+        qty={cart[p.id] || 0}
+        setQty={(q) => setQty(p.id, q)}
+        fav={!!favs[p.id]}
+        toggleFav={() => toggleFav(p.id)}
+        similar={similar}
+        cart={cart}
+        setQtyFor={setQty}
+        showTsino={TSINO_IDS.has(p.id)}
+        onOpen={onOpen}
+      />
+    </div>
+  );
+}
+
 /* ---------- App ---------- */
 export default function App() {
   const [cart, setCart] = usePersisted('silpo.cart', {});
   const [favs, setFavs] = usePersisted('silpo.favs', { '1ed075da-6532-6146-a995-dd63763181f9': true });
   const [tab, setTab] = useState('home');
-  const [selected, setSelected] = useState(null); // open product detail
+  // Open product is derived straight from browser history state, so the back
+  // button / back-swipe / forward / reload all stay in sync automatically.
+  const [selectedId, setSelectedId] = useState(() => window.history.state?.silpoProductId || null);
+  const selected = selectedId ? ALL_PRODUCTS.find(p => p.id === selectedId) || null : null;
   const setQty = (id, q) => setCart(c => { const n = { ...c }; if (q <= 0) delete n[id]; else n[id] = q; return n; });
   const toggleFav = (id) => setFavs(f => ({ ...f, [id]: !f[id] }));
   const cartCount = Object.values(cart).filter(Boolean).length;
-  const openProduct = (p) => setSelected(p);
 
-  const similar = selected
-    ? (sectionOf(selected.id)?.products || ALL_PRODUCTS).filter((x) => x.id !== selected.id)
-    : [];
+  const openProduct = (p) => {
+    window.history.pushState({ silpoProductId: p.id }, '');
+    setSelectedId(p.id);
+  };
+  const goBack = () => window.history.back();
+
+  // Back/forward (both fire popstate) → reflect whatever product the current
+  // history entry points at (or home when there is none).
+  useEffect(() => {
+    const sync = () => setSelectedId(window.history.state?.silpoProductId || null);
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
 
   return (
     <div style={{ position: 'relative', height: '100dvh', background: 'var(--blue-100)',
@@ -512,22 +569,15 @@ export default function App() {
       <TabBar tab={tab} setTab={setTab} cartCount={cartCount}/>
       <QrFab/>
 
-      {selected && (
-        <ProductScreen
-          key={selected.id}
-          p={selected}
-          onBack={() => setSelected(null)}
-          qty={cart[selected.id] || 0}
-          setQty={(q) => setQty(selected.id, q)}
-          fav={!!favs[selected.id]}
-          toggleFav={() => toggleFav(selected.id)}
-          similar={similar}
-          cart={cart}
-          setQtyFor={setQty}
-          showTsino={TSINO_IDS.has(selected.id)}
-          onOpen={openProduct}
-        />
-      )}
+      <ProductOverlay
+        product={selected}
+        cart={cart}
+        favs={favs}
+        setQty={setQty}
+        toggleFav={toggleFav}
+        onOpen={openProduct}
+        onBack={goBack}
+      />
     </div>
   );
 }

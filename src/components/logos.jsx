@@ -255,6 +255,15 @@ export const LokoMiniMark = ({ size = 32 }) => (
     fontSize: size * 0.22, letterSpacing: '-0.2px', fontFamily: 'var(--font-display)' }}>¡LOKO!</div>
 );
 
+// Favourite heart — red outline (default) / filled (active), official asset
+export const HeartMark = ({ size = 24, filled = false }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flex: 'none' }}>
+    {filled
+      ? <path d="M12 21s-7.5-4.7-10-9.3C.6 9 1.6 5.4 4.7 4.3 7 3.5 9.4 4.4 12 7c2.6-2.6 5-3.5 7.3-2.7 3.1 1.1 4.1 4.7 2.7 7.4C19.5 16.3 12 21 12 21z" fill="#FF0A3B"/>
+      : <path d="M12 20C11.85 20 11.69 19.96 11.55 19.89C11.2 19.72 3 15.54 3 9C3 6.24 5.24 4 8 4C9.63 4 11.09 4.79 12 6C12.91 4.78 14.37 4 16 4C18.76 4 21 6.24 21 9C21 15.54 12.8 19.72 12.45 19.89C12.31 19.96 12.16 20 12 20ZM8 6C6.35 6 5 7.35 5 9C5 13.55 10.39 16.95 12 17.86C13.61 16.94 19 13.53 19 9C19 7.35 17.65 6 16 6C14.35 6 13 7.35 13 9C13 9.55 12.55 10 12 10C11.45 10 11 9.55 11 9C11 7.35 9.65 6 8 6Z" fill="#FF0A3B"/>}
+  </svg>
+);
+
 // Add-to-cart "+" button — white rounded square, blue border + filled plus (official asset)
 export const AddPlusMark = ({ size = 32 }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flex: 'none' }}>
