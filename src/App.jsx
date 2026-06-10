@@ -3,9 +3,15 @@ import { useEffect, useState } from 'react';
 import Icon from './components/Icon.jsx';
 import {
   VRMark, ServiceMark, SilpoTile, LokoTile, AllInOne, CategoryTileIcon,
-  TsinoMark, PercentMark, GiftBadge,
+  TsinoMark, PercentMark, GiftBadge, AddPlusMark,
 } from './components/logos.jsx';
+import ProductScreen from './components/ProductScreen.jsx';
 import { homeData as D } from './data/home.live.js';
+
+// Flat product helpers for navigation / similar-products
+const ALL_PRODUCTS = D.sections.flatMap((s) => s.products);
+const TSINO_IDS = new Set((D.sections.find((s) => s.id === 'tsino')?.products || []).map((p) => p.id));
+const sectionOf = (id) => D.sections.find((s) => s.products.some((p) => p.id === id));
 
 /* ---------- Top app bar: address + VR bonus + avatar (52px, padding 10 16) ---------- */
 const Header = ({ bonus, address, notif }) => (
@@ -263,10 +269,9 @@ const Counter = ({ kg, step, qty, setQty }) => {
   if (qty <= 0) {
     return (
       <button onClick={(e) => { e.stopPropagation(); setQty(first); }} aria-label="Додати в кошик"
-        style={{ position: 'absolute', right: 0, top: 64, width: 32, height: 32, background: '#fff',
-          border: '2px solid #2358D1', borderRadius: 8, cursor: 'pointer',
-          display: 'grid', placeItems: 'center', boxSizing: 'border-box' }}>
-        <Icon name="plus" size={20} color="#2358D1" sw={2.4}/>
+        style={{ position: 'absolute', right: 0, top: 64, width: 32, height: 32, background: 'transparent',
+          border: 0, padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+        <AddPlusMark size={32}/>
       </button>
     );
   }
@@ -296,11 +301,11 @@ const stepLabel = (p) => {
   return `${parseFloat(step.toFixed(2))} ${p.unit || 'шт'}`;
 };
 
-const ProductCard = ({ p, showTsino, qty, setQty, fav, toggleFav }) => {
+const ProductCard = ({ p, showTsino, qty, setQty, fav, toggleFav, onOpen }) => {
   const disc = p.old ? Math.round((1 - p.price / p.old) * 100) : 0;
   const fmt = (n) => n.toFixed(2);
   return (
-    <div style={{ width: 96, flex: 'none', display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer' }}>
+    <div onClick={onOpen} style={{ width: 96, flex: 'none', display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer' }}>
       <div style={{ position: 'relative', width: 96, height: 96, borderRadius: 8, background: p.tint || '#fff',
         display: 'grid', placeItems: 'center', fontSize: 50 }}>
         {p.img
@@ -345,7 +350,7 @@ const ProductCard = ({ p, showTsino, qty, setQty, fav, toggleFav }) => {
 };
 
 /* ---------- Promo section (white card radius 24, padding 16, gap 16) ---------- */
-const PromoSection = ({ sec, cart, setQty, favs, toggleFav }) => (
+const PromoSection = ({ sec, cart, setQty, favs, toggleFav, onOpen }) => (
   <div style={{ background: '#fff', borderRadius: 24, padding: 16, display: 'flex', flexDirection: 'column',
     gap: 16, boxShadow: '0 1px 0 rgba(0,0,0,.06)', flex: 'none' }}>
     <PromoHeader icon={sec.icon === 'tsino'
@@ -355,7 +360,8 @@ const PromoSection = ({ sec, cart, setQty, favs, toggleFav }) => (
     <div className="no-sb" style={{ display: 'flex', gap: 8, overflowX: 'auto', margin: '0 -16px', padding: '0 16px' }}>
       {sec.products.map(p => (
         <ProductCard key={p.id} p={p} showTsino={sec.icon === 'tsino'} qty={cart[p.id] || 0}
-          setQty={(q) => setQty(p.id, q)} fav={!!favs[p.id]} toggleFav={() => toggleFav(p.id)}/>
+          setQty={(q) => setQty(p.id, q)} fav={!!favs[p.id]} toggleFav={() => toggleFav(p.id)}
+          onOpen={() => onOpen(p)}/>
       ))}
     </div>
   </div>
@@ -475,9 +481,15 @@ export default function App() {
   const [cart, setCart] = usePersisted('silpo.cart', {});
   const [favs, setFavs] = usePersisted('silpo.favs', { '1ed075da-6532-6146-a995-dd63763181f9': true });
   const [tab, setTab] = useState('home');
+  const [selected, setSelected] = useState(null); // open product detail
   const setQty = (id, q) => setCart(c => { const n = { ...c }; if (q <= 0) delete n[id]; else n[id] = q; return n; });
   const toggleFav = (id) => setFavs(f => ({ ...f, [id]: !f[id] }));
   const cartCount = Object.values(cart).filter(Boolean).length;
+  const openProduct = (p) => setSelected(p);
+
+  const similar = selected
+    ? (sectionOf(selected.id)?.products || ALL_PRODUCTS).filter((x) => x.id !== selected.id)
+    : [];
 
   return (
     <div style={{ position: 'relative', height: '100dvh', background: 'var(--blue-100)',
@@ -491,13 +503,31 @@ export default function App() {
         <BusinessGallery/>
         <PopularCategories/>
         {D.sections.map(sec => (
-          <PromoSection key={sec.id} sec={sec} cart={cart} setQty={setQty} favs={favs} toggleFav={toggleFav}/>
+          <PromoSection key={sec.id} sec={sec} cart={cart} setQty={setQty} favs={favs} toggleFav={toggleFav}
+            onOpen={openProduct}/>
         ))}
         <CategoriesMain/>
         <div style={{ height: 24, flex: 'none' }}/>
       </div>
       <TabBar tab={tab} setTab={setTab} cartCount={cartCount}/>
       <QrFab/>
+
+      {selected && (
+        <ProductScreen
+          key={selected.id}
+          p={selected}
+          onBack={() => setSelected(null)}
+          qty={cart[selected.id] || 0}
+          setQty={(q) => setQty(selected.id, q)}
+          fav={!!favs[selected.id]}
+          toggleFav={() => toggleFav(selected.id)}
+          similar={similar}
+          cart={cart}
+          setQtyFor={setQty}
+          showTsino={TSINO_IDS.has(selected.id)}
+          onOpen={openProduct}
+        />
+      )}
     </div>
   );
 }

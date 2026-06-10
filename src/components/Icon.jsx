@@ -8,7 +8,9 @@ const Icon = ({ name, size = 24, color = 'currentColor', sw = 2 }) => {
     case 'plus':    return (<svg {...c}><path d="M12 5v14M5 12h14"/></svg>);
     case 'minus':   return (<svg {...c}><path d="M5 12h14"/></svg>);
     case 'chevR':   return (<svg {...c}><path d="m9 6 6 6-6 6"/></svg>);
+    case 'arrowL':  return (<svg {...c}><path d="M19 12H5M11 18l-6-6 6-6"/></svg>);
     case 'arrowR':  return (<svg {...c}><path d="M5 12h14M13 6l6 6-6 6"/></svg>);
+    case 'share':   return (<svg {...c}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>);
     case 'heart':   return (<svg {...c} fill={color} stroke="none"><path d="M12 21s-7.5-4.7-10-9.3C.6 9 1.6 5.4 4.7 4.3 7 3.5 9.4 4.4 12 7c2.6-2.6 5-3.5 7.3-2.7 3.1 1.1 4.1 4.7 2.7 7.4C19.5 16.3 12 21 12 21z"/></svg>);
     case 'heartO':  return (<svg {...c}><path d="M12 20.5s-6.8-4.3-9.1-8.5C1.7 9.6 2.6 6.6 5.2 5.7c2-.7 4 .1 6.3 2.5 2.3-2.4 4.3-3.2 6.3-2.5 2.6.9 3.5 3.9 2.3 6.3C18.8 16.2 12 20.5 12 20.5z"/></svg>);
     case 'scan':    return (<svg {...c}><path d="M3 8V6a2 2 0 0 1 2-2h2M17 4h2a2 2 0 0 1 2 2v2M21 16v2a2 2 0 0 1-2 2h-2M7 20H5a2 2 0 0 1-2-2v-2"/><path d="M3 12h18"/></svg>);

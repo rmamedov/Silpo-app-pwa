@@ -255,6 +255,15 @@ export const LokoMiniMark = ({ size = 32 }) => (
     fontSize: size * 0.22, letterSpacing: '-0.2px', fontFamily: 'var(--font-display)' }}>¡LOKO!</div>
 );
 
+// Add-to-cart "+" button — white rounded square, blue border + filled plus (official asset)
+export const AddPlusMark = ({ size = 32 }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flex: 'none' }}>
+    <rect x="1" y="1" width="30" height="30" rx="7" fill="white"/>
+    <rect x="1" y="1" width="30" height="30" rx="7" stroke="#1B47C8" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M22 17H17V22C17 22.55 16.55 23 16 23C15.45 23 15 22.55 15 22V17H10C9.45 17 9 16.55 9 16C9 15.45 9.45 15 10 15H15V10C15 9.45 15.45 9 16 9C16.55 9 17 9.45 17 10V15H22C22.55 15 23 15.45 23 16C23 16.55 22.55 17 22 17Z" fill="#1B47C8"/>
+  </svg>
+);
+
 // Blue gift badge (Yezzz! tile)
 export const GiftBadge = ({ size = 24 }) => (
   <div style={{ width: size, height: size, borderRadius: size, background: '#5881DB', flex: 'none',
