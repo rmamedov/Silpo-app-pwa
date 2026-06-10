@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Icon from './Icon.jsx';
 import { TsinoMark, AddPlusMark } from './logos.jsx';
+import { gallery } from '../data/gallery.js';
 
 const fmt = (n) => n.toFixed(2);
 
@@ -121,9 +122,44 @@ const SimilarCard = ({ p, qty, setQty, onOpen }) => {
   );
 };
 
+/* ---------- Photo gallery (swipeable, scroll-snap) + bullets ---------- */
+const Gallery = ({ images, showTsino }) => {
+  const [active, setActive] = useState(0);
+  const onScroll = (e) => {
+    const el = e.currentTarget;
+    setActive(Math.min(images.length - 1, Math.round(el.scrollLeft / el.clientWidth)));
+  };
+  return (
+    <div style={{ position: 'relative', width: '100%', flex: 'none' }}>
+      <div className="no-sb" onScroll={onScroll}
+        style={{ display: 'flex', overflowX: 'auto', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
+        {images.map((src, i) => (
+          <div key={i} style={{ flex: 'none', width: '100%', aspectRatio: '1 / 1', scrollSnapAlign: 'start',
+            display: 'grid', placeItems: 'center', background: '#fff' }}>
+            <img src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'}
+              style={{ width: '86%', height: '86%', objectFit: 'contain' }}/>
+          </div>
+        ))}
+      </div>
+      {showTsino && <div style={{ position: 'absolute', top: 16, left: 16 }}><TsinoMark size={48}/></div>}
+      {images.length > 1 && (
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 12, display: 'flex',
+          justifyContent: 'center', alignItems: 'center', gap: 6, pointerEvents: 'none' }}>
+          {images.map((_, i) => (
+            <span key={i} style={{ width: 8, height: 8, borderRadius: 8,
+              background: i === active ? '#2358D1' : 'rgba(32,33,36,.2)',
+              transition: 'background 200ms cubic-bezier(.2,.7,.2,1)' }}/>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ---------- Product screen ---------- */
 export default function ProductScreen({ p, onBack, qty, setQty, fav, toggleFav, similar, cart, setQtyFor, showTsino, onOpen }) {
   const disc = p.old ? Math.round((1 - p.price / p.old) * 100) : 0;
+  const images = gallery[p.id]?.length ? gallery[p.id] : [p.img];
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 50, maxWidth: 560, margin: '0 auto',
       display: 'flex', flexDirection: 'column' }}>
@@ -150,11 +186,7 @@ export default function ProductScreen({ p, onBack, qty, setQty, fav, toggleFav, 
       {/* scrollable body */}
       <div className="no-sb" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {/* 2. Gallery */}
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', flex: 'none',
-          display: 'grid', placeItems: 'center', background: '#fff' }}>
-          <img src={p.img} alt={p.name} style={{ width: '86%', height: '86%', objectFit: 'contain' }}/>
-          {showTsino && <div style={{ position: 'absolute', top: 16, left: 16 }}><TsinoMark size={48}/></div>}
-        </div>
+        <Gallery images={images} showTsino={showTsino}/>
 
         {/* 3. Name + stock + rating */}
         <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
