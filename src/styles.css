@@ -1,0 +1,57 @@
+/* Сільпо — design tokens + fonts (from design handoff) */
+@font-face { font-family: "Silpo Text"; font-weight: 400; src: url("/fonts/SilpoText-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Text"; font-weight: 500; src: url("/fonts/SilpoText-Medium.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Text"; font-weight: 600; src: url("/fonts/SilpoText-SemiBold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Text"; font-weight: 700; src: url("/fonts/SilpoText-Bold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Text"; font-weight: 800; src: url("/fonts/SilpoText-ExtraBold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Text"; font-weight: 900; src: url("/fonts/SilpoText-Black.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Text Caption"; font-weight: 600; src: url("/fonts/SilpoText-CaptionSemiBold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Rounded"; font-weight: 700; src: url("/fonts/SilpoRounded-Bold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Silpo Rounded"; font-weight: 900; src: url("/fonts/SilpoRounded-Black.ttf") format("truetype"); font-display: swap; }
+
+:root {
+  --orange-100: #FFF0E0; --orange-200: #FFE1C1; --orange-300: #FFC384; --orange-400: #FF9B32;
+  --orange-500: #FF8200; --orange-550: #F07A00; --orange-600: #FF6F00; --orange-700: #FF5C00; --orange-900: #D76609;
+  --brand: var(--orange-500);
+  --blue-50: #F6F8FD; --blue-100: #EEF2FC; --blue-200: #D3DEF5; --blue-300: #ACBFEE;
+  --blue-400: #5881DB; --blue-500: #2358D1; --blue-600: #1A47C6; --blue-700: #1135BA; --blue-800: #0B2AA0;
+  --green-100: #EBF9ED; --green-500: #07B324; --green-700: #018308;
+  --yellow-500: #FFB200;
+  --red-500: #FF0A3B; --red-700: #C5082E; --error: #FF0A3B;
+  --pink-500: #FF3399; --pink-600: #E9167F;
+  --lblue-500: #00AAFF;
+  --violet-500: #801BFF;
+  --black-87: rgba(19,19,30,0.87); --black-72: rgba(19,19,30,0.72); --black-60: rgba(19,19,30,0.60);
+  --black-38: rgba(19,19,30,0.38); --black-12: rgba(19,19,30,0.12); --black-8: rgba(19,19,30,0.08);
+  --black-6: rgba(19,19,30,0.06); --black-4: rgba(19,19,30,0.04); --ink: #13131E;
+  --surface: #FFFFFF; --surface-2: #F6F8FD; --canvas: var(--blue-100);
+  --fg-1: rgba(19,19,30,0.87); --fg-2: rgba(19,19,30,0.72); --fg-3: rgba(19,19,30,0.60);
+  --r-4: 4px; --r-8: 8px; --r-12: 12px; --r-16: 16px; --r-20: 20px; --r-24: 24px; --r-32: 32px; --r-pill: 999px;
+  --shadow-volume: 0 1px 0 0 rgba(0,0,0,0.06);
+  --shadow-tile: inset 0 1px 0 rgba(255,255,255,0.87), inset 0 -1px 0 rgba(0,0,0,0.06);
+  --font-text: "Silpo Text", system-ui, -apple-system, sans-serif;
+  --font-display: "Silpo Rounded", "Silpo Text", system-ui, sans-serif;
+  --font-caption: "Silpo Text Caption", "Silpo Text", sans-serif;
+  --easing: cubic-bezier(.2,.7,.2,1); --dur: 200ms;
+  /* PWA safe areas (notch / home indicator) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--canvas);
+  font-family: var(--font-text);
+  color: var(--fg-1);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+body { -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; }
+::selection { background: var(--orange-200); }
+
+/* hide scrollbars on horizontal rails */
+.no-sb { scrollbar-width: none; -ms-overflow-style: none; }
+.no-sb::-webkit-scrollbar { display: none; }
