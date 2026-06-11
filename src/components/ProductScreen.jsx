@@ -2,7 +2,7 @@
 // The 18+ block renders only for adult goods (alcohol / tobacco): products with `adult: true`.
 import { useState, useEffect, useRef } from 'react';
 import Icon from './Icon.jsx';
-import { TsinoMark, AddPlusMark, HeartMark } from './logos.jsx';
+import { TsinoMark, AddPlusMark, HeartMark, ServiceMark } from './logos.jsx';
 import { gallery } from '../data/gallery.js';
 
 const fmt = (n) => n.toFixed(2);
@@ -174,6 +174,8 @@ const Gallery = ({ images, showTsino }) => {
   );
 };
 
+const BANANA_ID = '1ed075db-ae9b-6f2a-bf1a-dd63763181f9'; // violet «Власний Рахунок» promo shows only here
+
 /* ---------- Product screen ---------- */
 export default function ProductScreen({ p, onBack, qty, setQty, fav, toggleFav, similar, cart, setQtyFor, showTsino, onOpen }) {
   const disc = p.old ? Math.round((1 - p.price / p.old) * 100) : 0;
@@ -271,6 +273,13 @@ export default function ProductScreen({ p, onBack, qty, setQty, fav, toggleFav, 
               <TsinoMark size={32}/>
               <span style={{ fontSize: 13, lineHeight: '18px', color: 'rgba(32,33,36,.87)' }}>
                 <b>Цінотижики.</b> Щотижня знижуємо ціни на улюблені товари — додавайте до кошика та економте з Власним Рахунком.</span>
+            </div>
+          )}
+          {p.id === BANANA_ID && (
+            <div style={{ display: 'flex', gap: 10, padding: 14, background: '#F2ECFC', borderRadius: 8 }}>
+              <ServiceMark kind="offers" size={32}/>
+              <span style={{ fontSize: 13, lineHeight: '18px', color: 'rgba(32,33,36,.87)' }}>
+                <b>Власний Рахунок.</b> Отримуйте кешбек балобонусами за кожну покупку та оплачуйте ними до 99% вартості наступних замовлень у «Сільпо».</span>
             </div>
           )}
           {p.adult && (
