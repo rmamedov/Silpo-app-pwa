@@ -1,5 +1,5 @@
 // Сільпо — Home screen (PWA, built to the official Figma spec)
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import Icon from './components/Icon.jsx';
 import {
   VRMark, ServiceMark, SilpoTile, LokoTile, AllInOne, CategoryTileIcon,
@@ -477,32 +477,59 @@ const usePersisted = (key, initial) => {
   return [val, setVal];
 };
 
+const REDUCE_MOTION = typeof window !== 'undefined' && window.matchMedia
+  ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+
 /* ---------- Product overlay: slides in from the right on open, out to the
-   right on back. Keeps the last product mounted during the exit animation. ---------- */
+   right on back. Gated state machine — the slide animation only ever switches
+   between SETTLED positions; an interruption (back during slide-in, or opening
+   while sliding out) is deferred until the running animation finishes, so it
+   never snaps to the opposite edge (no double-flash). Honours
+   prefers-reduced-motion and never plays an unsolicited slide on cold load. ---------- */
 function ProductOverlay({ product, cart, favs, setQty, toggleFav, onOpen, onBack }) {
-  const [shown, setShown] = useState(product); // persists through the exit transition
-  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState(product); // product mounted (kept through exit)
+  const [anim, setAnim] = useState(null);          // 'in' | 'out' | null (settled)
+  const animatingRef = useRef(false);              // an in/out animation is mid-flight
 
-  useEffect(() => {
+  // Move the mounted state one step toward the desired `product`, but only when
+  // no animation is in flight (otherwise reconcile again on animationend).
+  const reconcile = useCallback(() => {
+    if (animatingRef.current) return;
     if (product) {
-      setShown(product);
-      // two RAFs so the off-screen start state paints before transitioning in
-      const r = requestAnimationFrame(() => requestAnimationFrame(() => setOpen(true)));
-      return () => cancelAnimationFrame(r);
+      if (!current) {                              // closed → open
+        setCurrent(product);
+        if (REDUCE_MOTION) setAnim(null);
+        else { animatingRef.current = true; setAnim('in'); }
+      } else if (current.id !== product.id) {      // settled swap (instant)
+        setCurrent(product); setAnim(null);
+      }
+    } else if (current) {                          // open → closed
+      if (REDUCE_MOTION) { setCurrent(null); setAnim(null); }
+      else { animatingRef.current = true; setAnim('out'); }
     }
-    setOpen(false); // slide out
-  }, [product]);
+  }, [product, current, anim]); // `anim` so settling (animation end) re-reconciles
 
-  if (!shown) return null;
-  const p = shown;
+  useEffect(() => { reconcile(); }, [reconcile]);
+
+  const onAnimEnd = (e) => {
+    if (e.target !== e.currentTarget) return;      // ignore child animations
+    animatingRef.current = false;
+    if (anim === 'out') { setCurrent(null); setAnim(null); } // exit done → unmount
+    else if (anim === 'in') setAnim(null);                   // entrance done → settle
+    // the resulting state change re-runs reconcile via the effect, which now
+    // applies whatever the user requested during the animation.
+  };
+
+  if (!current) return null;
+  const p = current;
   const similar = (sectionOf(p.id)?.products || ALL_PRODUCTS).filter((x) => x.id !== p.id);
+  const animation = anim
+    ? `${anim === 'in' ? 'silpoSlideIn' : 'silpoSlideOut'} 300ms cubic-bezier(.2,.7,.2,1) both`
+    : 'none';
   return (
-    <div
-      onTransitionEnd={(e) => { if (e.propertyName === 'transform' && !open && !product) setShown(null); }}
+    <div onAnimationEnd={onAnimEnd}
       style={{ position: 'fixed', inset: 0, zIndex: 50, maxWidth: 560, margin: '0 auto',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 320ms cubic-bezier(.2,.7,.2,1)',
-        boxShadow: open ? '-8px 0 28px rgba(0,0,0,.14)' : 'none', willChange: 'transform' }}>
+        boxShadow: '-8px 0 28px rgba(0,0,0,.14)', willChange: 'transform', animation }}>
       <ProductScreen
         key={p.id}
         p={p}
@@ -535,6 +562,7 @@ export default function App() {
   const cartCount = Object.values(cart).filter(Boolean).length;
 
   const openProduct = (p) => {
+    if (p.id === selectedId) return; // ignore duplicate taps (no extra history entry)
     window.history.pushState({ silpoProductId: p.id }, '');
     setSelectedId(p.id);
   };
