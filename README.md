@@ -34,17 +34,38 @@ phone on the same network. Use **Add to Home Screen** to install it as a PWA.
 
 ## Deploy
 
-The app is deployed to a droplet (nginx) at **http://104.248.132.130**.
+The app runs on DigitalOcean droplets (nginx). Live at:
+
+| Droplet | URL |
+| --- | --- |
+| Silpo-App-Prototype (default) | http://104.248.132.130 |
+| ubuntu-s-1vcpu-512mb-10gb-fra1 | http://161.35.196.123 |
 
 ```bash
-SSHPASS='<server-password>' ./deploy.sh
+SSHPASS='<server-password>' ./deploy.sh                      # → default droplet
+SILPO_HOST=161.35.196.123 SSHPASS='<password>' ./deploy.sh   # → a specific droplet
 ```
 
 `deploy.sh` builds the app, mirrors `dist/` to the web root, and **preserves
 server media** — it excludes `media/` from the `--delete`, so product videos are
 never wiped by an app deploy. It then syncs the local `media/` folder up to the
 server **additively** (no `--delete`), so videos are uploaded once and stay
-available forever.
+available forever. Pass `SILPO_HOST=<ip>` to target a particular droplet (each
+has its own password, so deploy them one at a time).
+
+### Provisioning a fresh droplet
+
+A new droplet needs nginx set up once before the first deploy:
+
+```bash
+ssh root@<ip> 'apt-get update && apt-get install -y nginx && mkdir -p /var/www/silpo/media'
+scp deploy/nginx-silpo.conf root@<ip>:/etc/nginx/sites-available/silpo
+ssh root@<ip> 'ln -sf /etc/nginx/sites-available/silpo /etc/nginx/sites-enabled/silpo \
+  && rm -f /etc/nginx/sites-enabled/default && nginx -t && systemctl reload nginx'
+```
+
+`deploy/nginx-silpo.conf` serves the SPA (`index.html` fallback), keeps `/sw.js`
+uncached, and long-caches `/assets/` and `/media/`.
 
 ### Product videos (served from the server, not bundled)
 

@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 # ============================================================================
-# Сільпо PWA — deploy to the droplet.
+# Сільпо PWA — deploy to a droplet.
 #
-#   SSHPASS='<server-password>' ./deploy.sh
+#   SSHPASS='<server-password>' ./deploy.sh                       # → default droplet
+#   SILPO_HOST=<ip> SSHPASS='<password>' ./deploy.sh              # → a specific droplet
+#
+# Known droplets (each has its own password):
+#   104.248.132.130  — Silpo-App-Prototype           (default)
+#   161.35.196.123   — ubuntu-s-1vcpu-512mb-10gb-fra1
+# A fresh droplet must be provisioned with nginx first — see deploy/nginx-silpo.conf.
 #
 # What it does:
 #   1. Builds the app (npm run build).
