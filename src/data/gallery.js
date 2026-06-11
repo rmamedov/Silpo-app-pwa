@@ -88,4 +88,9 @@ export const gallery = {
     I + 'ff179db1-fa19-4b79-83c7-e0c9ec1bbe0e.png',
     'http://104.248.132.130/media/torchyn-evropeyskyi.mp4',
   ],
+  // Майонез «Королівський смак» «Королівський» 67% — фото + промо-відео (з сервера).
+  '1ed0761f-67ca-609e-9574-dd63763181f9': [
+    I + 'ee71c47c-14e4-4a3d-95b0-6cc910ae2b55.png',
+    'http://104.248.132.130/media/korolivskyi-smak-67.mp4',
+  ],
 };
