@@ -1,5 +1,5 @@
 /* Сільпо PWA — service worker: precache app shell, runtime cache-first for static assets */
-const CACHE = 'silpo-v3';
+const CACHE = 'silpo-v4';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',
@@ -33,13 +33,17 @@ self.addEventListener('fetch', (e) => {
   const { request } = e;
   if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) return;
 
-  // Navigation: network-first with offline fallback to cached shell
+  // Navigation: network-first with offline fallback to cached shell.
+  // Only ever cache / serve a clean, non-redirected 200 as the app shell — never
+  // a redirect, so a misconfigured server can't poison the cache into a loop.
   if (request.mode === 'navigate') {
     e.respondWith(
       fetch(request)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('/', copy));
+          if (res && res.ok && !res.redirected && res.type === 'basic') {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put('/', copy));
+          }
           return res;
         })
         .catch(() => caches.match('/'))
