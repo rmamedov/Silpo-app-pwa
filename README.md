@@ -32,6 +32,31 @@ npm run preview  # preview the production build
 Open the dev server in a mobile viewport (DevTools device toolbar) or from a
 phone on the same network. Use **Add to Home Screen** to install it as a PWA.
 
+## Deploy
+
+The app is deployed to a droplet (nginx) at **http://104.248.132.130**.
+
+```bash
+SSHPASS='<server-password>' ./deploy.sh
+```
+
+`deploy.sh` builds the app, mirrors `dist/` to the web root, and **preserves
+server media** — it excludes `media/` from the `--delete`, so product videos are
+never wiped by an app deploy. It then syncs the local `media/` folder up to the
+server **additively** (no `--delete`), so videos are uploaded once and stay
+available forever.
+
+### Product videos (served from the server, not bundled)
+
+Product media lives in `media/` and is served from `http://<host>/media/<file>`
+— it is **not** part of the app bundle or `dist/`. To add a video to a product
+gallery:
+
+1. Drop the file into `./media/` (e.g. `media/torchyn-evropeyskyi.mp4`).
+2. Reference it in `src/data/gallery.js` as `http://104.248.132.130/media/<file>`,
+   placed in that product's gallery array (`.mp4` items auto-play muted on swipe).
+3. Run `./deploy.sh` — the video is uploaded and will survive future deploys.
+
 ## Project structure
 
 ```
