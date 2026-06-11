@@ -305,14 +305,15 @@ const stepLabel = (p) => {
 const ProductCard = ({ p, showTsino, qty, setQty, fav, toggleFav, onOpen }) => {
   const disc = p.old ? Math.round((1 - p.price / p.old) * 100) : 0;
   const fmt = (n) => n.toFixed(2);
+  const [imgErr, setImgErr] = useState(false);
   return (
     <div onClick={onOpen} style={{ width: 96, flex: 'none', display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer' }}>
       <div style={{ position: 'relative', width: 96, height: 96, borderRadius: 8, background: p.tint || '#fff',
         display: 'grid', placeItems: 'center', fontSize: 50 }}>
-        {p.img
-          ? <img src={p.img} alt="" width="96" height="96" loading="lazy"
+        {p.img && !imgErr
+          ? <img src={p.img} alt="" width="96" height="96" loading="lazy" onError={() => setImgErr(true)}
               style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }}/>
-          : <span>{p.emoji}</span>}
+          : <span>{p.emoji || '🫙'}</span>}
         <div style={{ position: 'absolute', left: 0, top: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {showTsino && <TsinoMark size={32}/>}
           {showTsino && p.old > p.price && <PercentMark size={32}/>}
