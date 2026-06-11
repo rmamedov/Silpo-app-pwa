@@ -5,10 +5,13 @@
 #   SSHPASS='<server-password>' ./deploy.sh                       # → default droplet
 #   SILPO_HOST=<ip> SSHPASS='<password>' ./deploy.sh              # → a specific droplet
 #
-# Known droplets (each has its own password):
-#   104.248.132.130  — Silpo-App-Prototype           (default)
-#   161.35.196.123   — ubuntu-s-1vcpu-512mb-10gb-fra1
-# A fresh droplet must be provisioned with nginx first — see deploy/nginx-silpo.conf.
+# Droplets (each has its own password):
+#   161.35.196.123   — ubuntu-s-1vcpu-512mb-10gb-fra1  (default; serves the app
+#                       over HTTPS at https://161.35.196.123.sslip.io)
+#   104.248.132.130  — Silpo-App-Prototype  (301-redirects HTTP → the canonical
+#                       HTTPS URL; no need to deploy the app here anymore)
+# A fresh droplet must be provisioned with nginx first — see deploy/nginx-silpo.conf
+# (HTTP) or deploy/nginx-silpo-ssl.conf (HTTPS) and the README.
 #
 # What it does:
 #   1. Builds the app (npm run build).
@@ -25,8 +28,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-HOST="${SILPO_HOST:-104.248.132.130}"
+HOST="${SILPO_HOST:-161.35.196.123}"
 USER="${SILPO_USER:-root}"
+PUBLIC_URL="${SILPO_URL:-https://161.35.196.123.sslip.io}"  # canonical URL used for verification
 REMOTE_ROOT="/var/www/silpo"
 SSH_OPTS="-o StrictHostKeyChecking=accept-new -o PreferredAuthentications=password -o PubkeyAuthentication=no"
 REMOTE_SHELL="sshpass -e ssh $SSH_OPTS"
@@ -49,13 +53,13 @@ if [[ -d media ]] && [[ -n "$(ls -A media 2>/dev/null)" ]]; then
   rsync -az -e "$REMOTE_SHELL" media/ "$USER@$HOST:$REMOTE_ROOT/media/"
 fi
 
-echo "▸ Verifying…"
-curl -s -o /dev/null -w "  index:               %{http_code}\n" "http://$HOST/"
+echo "▸ Verifying ($PUBLIC_URL)…"
+curl -s -o /dev/null -w "  index:               %{http_code}\n" "$PUBLIC_URL/"
 if [[ -d media ]]; then
   for f in media/*; do
     [[ -e "$f" ]] || continue
     name="$(basename "$f")"
-    curl -s -o /dev/null -w "  media/$name:  %{http_code} %{content_type}\n" "http://$HOST/media/$name"
+    curl -s -o /dev/null -w "  media/$name:  %{http_code} %{content_type}\n" "$PUBLIC_URL/media/$name"
   done
 fi
-echo "✓ Deployed → http://$HOST"
+echo "✓ Deployed → $PUBLIC_URL"

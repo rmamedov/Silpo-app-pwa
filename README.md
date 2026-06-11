@@ -34,12 +34,35 @@ phone on the same network. Use **Add to Home Screen** to install it as a PWA.
 
 ## Deploy
 
-The app runs on DigitalOcean droplets (nginx). Live at:
+The app runs on DigitalOcean droplets (nginx).
 
-| Droplet | URL |
+**Canonical URL: https://161.35.196.123.sslip.io** (HTTPS, Let's Encrypt).
+
+| Droplet | Role |
 | --- | --- |
-| Silpo-App-Prototype (default) | http://104.248.132.130 |
-| ubuntu-s-1vcpu-512mb-10gb-fra1 | http://161.35.196.123 |
+| ubuntu-s-1vcpu-512mb-10gb-fra1 · 161.35.196.123 | serves the app over HTTPS at `161.35.196.123.sslip.io` (free [sslip.io](https://sslip.io) domain) |
+| Silpo-App-Prototype · 104.248.132.130 | 301-redirects all HTTP traffic to the canonical HTTPS URL |
+
+### HTTPS / domain
+
+The free domain `161.35.196.123.sslip.io` (sslip.io resolves any embedded IP — no
+registration) has a Let's Encrypt cert issued via:
+
+```bash
+ssh root@161.35.196.123 'apt-get install -y certbot && \
+  certbot certonly --webroot -w /var/www/silpo -d 161.35.196.123.sslip.io \
+  --agree-tos -m <email> --deploy-hook "systemctl reload nginx"'
+scp deploy/nginx-silpo-ssl.conf root@161.35.196.123:/etc/nginx/sites-available/silpo
+ssh root@161.35.196.123 'nginx -t && systemctl reload nginx'
+```
+
+`deploy/nginx-silpo-ssl.conf` serves the app on :443, redirects :80 → HTTPS, and
+keeps the ACME-challenge path open for renewals (certbot auto-renews via its
+systemd timer + the `--deploy-hook` nginx reload).
+
+The old droplet uses `deploy/nginx-redirect.conf` (`return 301
+https://161.35.196.123.sslip.io$request_uri;`) so every old HTTP link lands on
+the canonical HTTPS app.
 
 ```bash
 SSHPASS='<server-password>' ./deploy.sh                      # → default droplet
