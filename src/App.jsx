@@ -309,10 +309,10 @@ const ProductCard = ({ p, showTsino, qty, setQty, fav, toggleFav, onOpen }) => {
   return (
     <div onClick={onOpen} style={{ width: 96, flex: 'none', display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer' }}>
       <div style={{ position: 'relative', width: 96, height: 96, borderRadius: 8, background: p.tint || '#fff',
-        display: 'grid', placeItems: 'center', fontSize: 50 }}>
+        overflow: 'hidden', display: 'grid', placeItems: 'center', fontSize: 50 }}>
         {p.img && !imgErr
-          ? <img src={p.img} alt="" width="96" height="96" loading="lazy" onError={() => setImgErr(true)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }}/>
+          ? <img src={p.img} alt="" loading="lazy" onError={() => setImgErr(true)}
+              style={{ maxWidth: 96, maxHeight: 96, width: 'auto', height: 'auto', objectFit: 'contain', borderRadius: 8 }}/>
           : <span>{p.emoji || '🫙'}</span>}
         <div style={{ position: 'absolute', left: 0, top: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {showTsino && <TsinoMark size={32}/>}

@@ -1,6 +1,6 @@
 // Сільпо — Product detail screen (built to silpo-product-card-spec.md).
 // The 18+ block renders only for adult goods (alcohol / tobacco): products with `adult: true`.
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Icon from './Icon.jsx';
 import { TsinoMark, AddPlusMark, HeartMark } from './logos.jsx';
 import { gallery } from '../data/gallery.js';
@@ -122,13 +122,27 @@ const SimilarCard = ({ p, qty, setQty, onOpen }) => {
   );
 };
 
-/* ---------- Photo gallery (swipeable, scroll-snap) + bullets ---------- */
+/* ---------- Photo / video gallery (swipeable, scroll-snap) + bullets ----------
+   Video items (src ending in .mp4) are streamed from the server (preload="none",
+   so nothing downloads until the slide is reached) and auto-play muted the moment
+   the user swipes to them; they pause + rewind when swiped away. ---------- */
+const isVideo = (src) => /\.mp4(\?|$)/i.test(src);
+
 const Gallery = ({ images, showTsino }) => {
   const [active, setActive] = useState(0);
+  const vids = useRef({});
   const onScroll = (e) => {
     const el = e.currentTarget;
     setActive(Math.min(images.length - 1, Math.round(el.scrollLeft / el.clientWidth)));
   };
+  // Play the active slide's video, pause + rewind the others.
+  useEffect(() => {
+    Object.entries(vids.current).forEach(([i, v]) => {
+      if (!v) return;
+      if (Number(i) === active) { const pr = v.play(); if (pr?.catch) pr.catch(() => {}); }
+      else { v.pause(); try { v.currentTime = 0; } catch { /* not loaded yet */ } }
+    });
+  }, [active]);
   return (
     <div style={{ position: 'relative', width: '100%', flex: 'none' }}>
       <div className="no-sb" onScroll={onScroll}
@@ -136,8 +150,11 @@ const Gallery = ({ images, showTsino }) => {
         {images.map((src, i) => (
           <div key={i} style={{ flex: 'none', width: '100%', aspectRatio: '1 / 1', scrollSnapAlign: 'center',
             scrollSnapStop: 'always', display: 'grid', placeItems: 'center', background: '#fff' }}>
-            <img src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'}
-              style={{ width: '86%', height: '86%', objectFit: 'contain' }}/>
+            {isVideo(src)
+              ? <video ref={(el) => { vids.current[i] = el; }} src={src} muted loop playsInline preload="none"
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff' }}/>
+              : <img src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'}
+                  style={{ width: '86%', height: '86%', objectFit: 'contain' }}/>}
           </div>
         ))}
       </div>
