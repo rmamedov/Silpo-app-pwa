@@ -1,5 +1,5 @@
 /* Сільпо PWA — service worker: precache app shell, runtime cache-first for static assets */
-const CACHE = 'silpo-v2';
+const CACHE = 'silpo-v3';
 const APP_SHELL = [
   '/',
   '/manifest.webmanifest',

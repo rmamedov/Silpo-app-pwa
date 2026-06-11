@@ -55,7 +55,3 @@ button { font-family: inherit; }
 /* hide scrollbars on horizontal rails */
 .no-sb { scrollbar-width: none; -ms-overflow-style: none; }
 .no-sb::-webkit-scrollbar { display: none; }
-
-/* product screen slide-in / slide-out (right edge) */
-@keyframes silpoSlideIn  { from { transform: translateX(100%); } to { transform: translateX(0); } }
-@keyframes silpoSlideOut { from { transform: translateX(0); }    to { transform: translateX(100%); } }

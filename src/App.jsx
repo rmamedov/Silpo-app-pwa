@@ -1,5 +1,5 @@
 // Сільпо — Home screen (PWA, built to the official Figma spec)
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import Icon from './components/Icon.jsx';
 import {
   VRMark, ServiceMark, SilpoTile, LokoTile, AllInOne, CategoryTileIcon,
@@ -481,55 +481,74 @@ const REDUCE_MOTION = typeof window !== 'undefined' && window.matchMedia
   ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
 
 /* ---------- Product overlay: slides in from the right on open, out to the
-   right on back. Gated state machine — the slide animation only ever switches
-   between SETTLED positions; an interruption (back during slide-in, or opening
-   while sliding out) is deferred until the running animation finishes, so it
-   never snaps to the opposite edge (no double-flash). Honours
-   prefers-reduced-motion and never plays an unsolicited slide on cold load. ---------- */
+   right on back. Driven imperatively via the Web Animations API so an
+   interruption (tap/swipe back while it is still sliding in) is handled with
+   anim.reverse() — the panel smoothly reverses from its CURRENT position back
+   off-screen, instead of completing then re-animating (no double motion, no
+   snap). Robust against React re-renders since the transform is owned by the
+   running animation, not inline style. Honours prefers-reduced-motion. ---------- */
+const ANIM_DUR = 300;
+const ANIM_EASE = 'cubic-bezier(.2,.7,.2,1)';
+const IN_FRAMES = [{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }];
+const OUT_FRAMES = [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }];
+
 function ProductOverlay({ product, cart, favs, setQty, toggleFav, onOpen, onBack }) {
-  const [current, setCurrent] = useState(product); // product mounted (kept through exit)
-  const [anim, setAnim] = useState(null);          // 'in' | 'out' | null (settled)
-  const animatingRef = useRef(false);              // an in/out animation is mid-flight
+  const [current, setCurrent] = useState(product); // product currently mounted (or null)
+  const elRef = useRef(null);
+  const animRef = useRef(null);     // the running Web Animation (or null)
+  const dirRef = useRef('idle');    // 'in' | 'out' | 'idle'
+  const prevRef = useRef(current);  // previous `current` (to detect a fresh mount)
 
-  // Move the mounted state one step toward the desired `product`, but only when
-  // no animation is in flight (otherwise reconcile again on animationend).
-  const reconcile = useCallback(() => {
-    if (animatingRef.current) return;
+  // Reconcile the mounted product with the desired one, animating as needed.
+  useEffect(() => {
+    if (REDUCE_MOTION) { setCurrent(product || null); return; }
+    const el = elRef.current;
     if (product) {
-      if (!current) {                              // closed → open
+      if (!current) { setCurrent(product); return; }     // mount → slide-in (layout effect)
+      if (current.id !== product.id) {                    // swap to a different product
         setCurrent(product);
-        if (REDUCE_MOTION) setAnim(null);
-        else { animatingRef.current = true; setAnim('in'); }
-      } else if (current.id !== product.id) {      // settled swap (instant)
-        setCurrent(product); setAnim(null);
+        if (dirRef.current === 'out' && animRef.current) { // was leaving → bring it back
+          animRef.current.reverse(); dirRef.current = 'in';
+          animRef.current.onfinish = () => { dirRef.current = 'idle'; };
+        }
+        return;
       }
-    } else if (current) {                          // open → closed
-      if (REDUCE_MOTION) { setCurrent(null); setAnim(null); }
-      else { animatingRef.current = true; setAnim('out'); }
+      if (dirRef.current === 'out' && animRef.current) {  // re-opened same product mid-exit
+        animRef.current.reverse(); dirRef.current = 'in';
+        animRef.current.onfinish = () => { dirRef.current = 'idle'; };
+      }
+    } else if (current) {                                  // close
+      if (!el) { setCurrent(null); return; }
+      if (dirRef.current === 'in' && animRef.current && animRef.current.playState === 'running') {
+        animRef.current.reverse();                         // reverse the in-flight slide-in
+      } else {
+        animRef.current = el.animate(OUT_FRAMES, { duration: ANIM_DUR, easing: ANIM_EASE, fill: 'forwards' });
+      }
+      dirRef.current = 'out';
+      animRef.current.onfinish = () => { if (dirRef.current === 'out') setCurrent(null); };
     }
-  }, [product, current, anim]); // `anim` so settling (animation end) re-reconciles
+  }, [product, current]);
 
-  useEffect(() => { reconcile(); }, [reconcile]);
-
-  const onAnimEnd = (e) => {
-    if (e.target !== e.currentTarget) return;      // ignore child animations
-    animatingRef.current = false;
-    if (anim === 'out') { setCurrent(null); setAnim(null); } // exit done → unmount
-    else if (anim === 'in') setAnim(null);                   // entrance done → settle
-    // the resulting state change re-runs reconcile via the effect, which now
-    // applies whatever the user requested during the animation.
-  };
+  // Play the slide-in right after a fresh mount (before paint, so no flash at 0).
+  useLayoutEffect(() => {
+    const freshMount = !prevRef.current && current;
+    prevRef.current = current;
+    if (REDUCE_MOTION || !freshMount) return;
+    const el = elRef.current;
+    if (el && product && product.id === current.id) {
+      animRef.current = el.animate(IN_FRAMES, { duration: ANIM_DUR, easing: ANIM_EASE, fill: 'forwards' });
+      dirRef.current = 'in';
+      animRef.current.onfinish = () => { dirRef.current = 'idle'; };
+    }
+  }, [current]);
 
   if (!current) return null;
   const p = current;
   const similar = (sectionOf(p.id)?.products || ALL_PRODUCTS).filter((x) => x.id !== p.id);
-  const animation = anim
-    ? `${anim === 'in' ? 'silpoSlideIn' : 'silpoSlideOut'} 300ms cubic-bezier(.2,.7,.2,1) both`
-    : 'none';
   return (
-    <div onAnimationEnd={onAnimEnd}
+    <div ref={elRef}
       style={{ position: 'fixed', inset: 0, zIndex: 50, maxWidth: 560, margin: '0 auto',
-        boxShadow: '-8px 0 28px rgba(0,0,0,.14)', willChange: 'transform', animation }}>
+        boxShadow: '-8px 0 28px rgba(0,0,0,.14)', willChange: 'transform' }}>
       <ProductScreen
         key={p.id}
         p={p}
